@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Kala AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --primary-text: #E0E0E0;
+            --secondary-text: #B0B0B0;
+            --accent-color: #03DAC5; /* Teal */
+            --error-color: #CF6679; /* Red */
+            --surface-color: #1E1E1E;
+            --mic-button-size: 80px;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        .header {
+            position: absolute;
+            top: 15px;
+            left: 20px;
+            font-size: 0.8em;
+            font-weight: 300;
+            color: var(--secondary-text);
+            opacity: 0.7;
+        }
+
+        .container {
+            width: 90%;
+            margin: 0 auto;
+            text-align: center;
+            padding-top: 5vh;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            transition: all 0.3s ease;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1em;
+            font-weight: 500;
+            color: var(--accent-color);
+            border-bottom: 1px solid rgba(224, 224, 224, 0.1);
+            padding-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .card p {
+            margin: 0;
+            font-size: 0.95em;
+            min-height: 1.2em;
+            font-weight: 300;
+            color: var(--secondary-text);
+            word-wrap: break-word;
+        }
+
+        #transcript {
+            font-style: italic;
+            color: var(--primary-text);
+            font-weight: 400;
+        }
+        
+        #contact-matches-card {
+            max-height: 35vh;
+            overflow-y: auto;
+        }
+        
+        .contact-button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid var(--accent-color);
+            background-color: transparent;
+            color: var(--accent-color);
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+        .contact-button:hover {
+            background-color: var(--accent-color);
+            color: var(--bg-color);
+        }
+
+        .mic-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-bottom: 5vh;
+        }
+
+        #mic-button {
+            width: var(--mic-button-size);
+            height: var(--mic-button-size);
+            border-radius: 50%;
+            background-color: var(--accent-color);
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.2s ease, background-color 0.2s ease, box-shadow 0.3s ease;
+            box-shadow: 0 0 20px rgba(3, 218, 197, 0.4);
+        }
+
+        #mic-button:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+        
+        #mic-button.listening {
+            background-color: var(--error-color);
+            box-shadow: 0 0 25px rgba(207, 102, 121, 0.6);
+            animation: pulse 1.5s infinite;
+        }
+        
+        #mic-button:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #mic-icon {
+            width: 50%;
+            height: 50%;
+            fill: var(--bg-color);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">An ORIGIN product</div>
+
+    <div class="container">
+        <div class="card">
+            <h2>STATUS</h2>
+            <p id="status">Initializing...</p>
+        </div>
+        <div class="card">
+            <h2>TRANSCRIPT</h2>
+            <p id="transcript">-</p>
+        </div>
+        <div class="card">
+            <h2>ACTION</h2>
+            <p id="action">-</p>
+        </div>
+        <div class="card" id="contact-matches-card" style="display: none;">
+             <h2>WHICH CONTACT?</h2>
+             <div id="contact-matches"></div>
+        </div>
+    </div>
+
+    <div class="mic-container">
+        <button id="mic-button" aria-label="Toggle Listening">
+            <svg id="mic-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3zm5.3-3c0 3-2.54 5.1-5.3 5.1S6.7 14 6.7 11H5c0 3.41 2.72 6.23 6 6.72V21h2v-3.28c3.28-.49 6-3.31 6-6.72h-1.7z"/>
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        const micButton = document.getElementById('mic-button');
+        let isListening = false;
+
+        // --- Bridge Communication ---
+        function updateUI(status, transcript, action) {
+            document.getElementById('status').textContent = status;
+            document.getElementById('transcript').textContent = transcript;
+            document.getElementById('action').textContent = action;
+
+            if (status.includes('ERROR') || status.includes('denied') || status.includes('failed')) {
+                micButton.disabled = true;
+            } else {
+                micButton.disabled = false;
+            }
+        }
+
+        function setListeningState(state) {
+            isListening = state;
+            if (isListening) {
+                micButton.classList.add('listening');
+            } else {
+                micButton.classList.remove('listening');
+            }
+        }
+        
+        function showContactMatches(matches) {
+            const container = document.getElementById('contact-matches');
+            const card = document.getElementById('contact-matches-card');
+            container.innerHTML = ''; // Clear previous matches
+            
+            if (matches && matches.length > 0) {
+                matches.forEach(name => {
+                    const btn = document.createElement('button');
+                    btn.className = 'contact-button';
+                    btn.textContent = name;
+                    btn.onclick = () => {
+                        // Call back to Python with the selected contact
+                        if (window.KalaBridge) {
+                            window.KalaBridge.selectContact(name);
+                        }
+                        card.style.display = 'none'; // Hide after selection
+                    };
+                    container.appendChild(btn);
+                });
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        }
+
+        micButton.addEventListener('click', () => {
+            if (micButton.disabled) return;
+            isListening = !isListening;
+            setListeningState(isListening);
+            try {
+                if (window.KalaBridge) {
+                    window.KalaBridge.toggleListening(isListening);
+                } else {
+                    updateUI('ERROR', 'Bridge Error', 'Could not communicate with the Python backend.');
+                    console.warn('KalaBridge not available.');
+                }
+            } catch (e) {
+                updateUI('ERROR', 'Bridge Error', e.message);
+            }
+        });
+
+        // Initialize state from Python backend on load
+        document.addEventListener('DOMContentLoaded', () => {
+            try {
+                 if (window.KalaBridge) {
+                    setListeningState(KalaBridge.getListeningState());
+                 }
+            } catch (e) {
+                console.error("Could not get initial state from bridge.");
+            }
+        });
+
+        // --- For Desktop Testing ---
+        if (!window.KalaBridge) {
+            console.log("Running in test mode. KalaBridge not found.");
+            updateUI("Status: Ready (Desktop)", "Transcript: -", "Action: Say 'Hey Kala' or tap the button.");
+        }
+
+    </script>
+</body>
+</html>
